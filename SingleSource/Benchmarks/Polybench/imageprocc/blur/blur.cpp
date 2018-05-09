@@ -77,7 +77,7 @@ static inline void write_JPEG_file(char * __restrict__ filename, int width, int 
     jpeg_destroy_compress(&cinfo);
 }
 
-void SobelEdgeDetection(char * __restrict__ filename, int height, int width,int  channels,unsigned char image[]);
+void Blur(char * __restrict__ filename, int height, int width,int  channels,unsigned char image[]);
 
 
 
@@ -87,8 +87,8 @@ int main(/*int argc, char *argv[]*/)
     //     printf("Usage: ./ex1\n");
     //     return 1;
     // }
-    char *infile = "/home/pankaj/Installations/llvm-test-suite/test-suite-build/SingleSource/Benchmarks/Polybench/imageprocc/sobel/Sample.jpeg";
-    char *outfile = "/home/pankaj/Installations/llvm-test-suite/test-suite-build/SingleSource/Benchmarks/Polybench/imageprocc/sobel/Sobel_Sample.jpeg";
+    char *infile = "/home/pankaj/Installations/llvm-test-suite/test-suite-build/SingleSource/Benchmarks/Polybench/imageprocc/blur/Sample.jpeg";
+    char *outfile = "/home/pankaj/Installations/llvm-test-suite/test-suite-build/SingleSource/Benchmarks/Polybench/imageprocc/blur/Blur_Sample.jpeg";
     unsigned char *image;
     int width, height, channels;
     read_JPEG_file(infile, &width, &height, &channels, &image);
@@ -108,7 +108,7 @@ int main(/*int argc, char *argv[]*/)
         write_JPEG_file("Sample_Grayscale.jpg", width, height, channels, image, 95);
     }
     // return 0;
-    SobelEdgeDetection(outfile , height, width, channels, image);
+    Blur(outfile , height, width, channels, image);
     // RobertsEdgeDetection(argv[3], height, width, channels, image);
     free(image);
     // std::cout << "Output = Sobel_Sample.jpeg" << std::endl;
@@ -116,16 +116,13 @@ int main(/*int argc, char *argv[]*/)
 
 }
 
-void SobelEdgeDetection(char *filename, int height, int width,int  channels,unsigned char image[])
+void Blur(char *filename, int height, int width,int  channels,unsigned char image[])
 {
-    
-
     // int img2d[height][width]; // Seg fault for large image due to this
     // std::cout << "Image Size = " << height << " x " << width << std::endl;
     int ** img2d = malloc(height*sizeof(int *));
-    int ** img2dhororg = malloc(height*sizeof(int *));
-    int ** img2dverorg = malloc(height*sizeof(int *));
-    int ** img2dmag = malloc(height*sizeof(int *));
+    int ** img2dblur = malloc(height*sizeof(int *));
+
     for (int i=0; i<height; i++){
         img2d[i] = malloc(width*sizeof(int));
         for (int j=0; j<width; j++) {
@@ -133,89 +130,50 @@ void SobelEdgeDetection(char *filename, int height, int width,int  channels,unsi
         }
     }
 
-
     for (int i=0; i<height; i++){
-        img2dhororg[i] = malloc(width*sizeof(int));
+        img2dblur[i] = malloc(width*sizeof(int));
         for (int j=0; j<width; j++) {
-            img2dhororg[i][j] = 0;
+            img2dblur[i][j] = 0;
         }
     }
-
-    for (int i=0; i<height; i++){
-        img2dverorg[i] = malloc(width*sizeof(int));
-        for (int j=0; j<width; j++) {
-            img2dverorg[i][j] = 0;
-        }
-    }
-
-    for (int i=0; i<height; i++){
-        img2dmag[i] = malloc(width*sizeof(int));
-        for (int j=0; j<width; j++) {
-            img2dmag[i][j] = 0;
-        }
-    }
-
-    // int img2dhororg[height][width];
-    // int img2dverorg[height][width];
-    // int img2dmag[height][width];
-
-
-
 
     ///horizontal
-    int max=-200, min=2000;
-    for (int i=1; i<height-1; i++){
-        for (int j=1; j<width-1; j++) {
-            int curr=img2d[i-1][j-1]+2*img2d[i-1][j]+img2d[i-1][j+1]-img2d[i+1][j-1]-2*img2d[i+1][j]-img2d[i+1][j+1];
-            img2dhororg[i][j] = curr;
-            if (curr>max)
-                max = curr;
-            if (curr<min)
-                min = curr;
+    int curr1 = 0;
+    int window_size = 10;
+    int offset = (window_size-1)/2;
+
+    int max= -200, min=2000;
+    for (int i=offset; i<height-offset; i++){
+        for (int j=offset; j<width-offset; j++) {
+            curr1=0;
+            for (int k= -1 * offset; k<offset; k++) {
+                for (int l= -1 * offset; l<offset; l++) {
+                    curr1 += img2d[i+k][j+l];
+                }
+            }
+            img2dblur[i][j] = (curr1)/(window_size*window_size);
+            if (img2dblur[i][j]>max)
+                max = img2dblur[i][j];
+            if (img2dblur[i][j]<min)
+                min = img2dblur[i][j];
         }
     }
 
-
-  ///vertical:
-  max=-200; min=2000;
-
-    for (int i=1; i<height-1; i++){
-        for (int j=1; j<width-1; j++) {
-            int curr=img2d[i-1][j-1]+2*img2d[i][j-1]+img2d[i+1][j-1]-img2d[i-1][j+1]-2*img2d[i][j+1]-img2d[i+1][j+1];
-            img2dverorg[i][j] = curr;
-            if (curr>max)
-                max = curr;
-            if (curr<min)
-                min = curr;
-        }
-    }
-
-  ///magnitude
-  max=-200; min=2000;
-
-    for (int i=0; i<height; i++) {
-        for (int j=0; j<width; j++) {
-            img2dmag[i][j] = sqrt(pow(img2dhororg[i][j], 2)+pow(img2dverorg[i][j], 2));
-            if (img2dmag[i][j]>max)
-                max = img2dmag[i][j];
-            if (img2dmag[i][j]<min)
-                min = img2dmag[i][j];
-        }
-    }
-
+    //  To make it a bit sharper 
     int diff = max - min;
     for (int i=0; i<height; i++) {
         for (int j=0; j<width; j++){
-            float abc = (img2dmag[i][j]-min)/(diff*1.0);
-            img2dmag[i][j] = abc* 255;
+            float abc = (img2dblur[i][j]-min)/(diff*1.0);
+            img2dblur[i][j] = abc* 255;
         }
     }
 
     for (int i=0; i<height; i++) {
         for (int j=0; j<width; j++) {
-            image[i*width+j]=img2dmag[i][j];
-            std::cout << img2dmag[i][j];
+            image[i*width+j]=img2dblur[i][j];
+            std::cout << img2dblur[i][j];
         }
     }
+
     write_JPEG_file(filename, width, height, channels, image, 95);
 }
