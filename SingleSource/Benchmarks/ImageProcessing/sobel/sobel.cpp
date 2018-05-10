@@ -17,106 +17,98 @@ using namespace std;
 
 
 #define WINDOW 10
-#define DUMPIMAGE(s) std::cout << s
+#define PRINTIMAGE(s) std::cout << s
 
 
-void SobelEdgeDetection(int height, int width ,int **image);
+void init_image(int height, int width, int **image);
+void sobel_edge_detection(int height, int width ,int **image);
+void print_image(int height, int width, int **image);
 
-int main(/*int argc, char *argv[]*/)
+
+
+int main(int argc, char *argv[])
 {
-    int** img2d = (int**)malloc(HEIGHT*sizeof(int *));
+    int ** image = (int**)malloc(HEIGHT*sizeof(int *));
 
-    //  Initialize a random image  
-    for (int i=0; i<HEIGHT; i++){
-        img2d[i] = (int*)malloc(WIDTH*sizeof(int));
-        for (int j=0; j<WIDTH; j++) {
-            img2d[i][j] = (i*WIDTH*j +i+j)%256; //Any Random Arbitary Input Should Work
-        }
-    }
+    init_image(HEIGHT, WIDTH, image);
+    sobel_edge_detection(HEIGHT, WIDTH, image);
 
-
-    SobelEdgeDetection(HEIGHT, WIDTH, img2d);
-
-
+    print_image( HEIGHT,  WIDTH,  image);
+    
     for (int i=0; i<HEIGHT; i++)
-        free(img2d[i]);
-    free(img2d); 
+        free(image[i]);
+    free(image);   
 
-    return 0;
-
+    return EXIT_SUCCESS;
 }
 
-void SobelEdgeDetection(int height, int width ,int **img2d)
+
+
+void init_image(int height, int width, int **image)
+{
+    //  Initialize a random image  
+    for (int i=0; i<HEIGHT; i++){
+        image[i] = (int*)malloc(WIDTH*sizeof(int));
+        for (int j=0; j<WIDTH; j++) {
+            image[i][j] = (i*WIDTH*j +i+j)%256; //Any Random Arbitary Input Should Work
+        }
+    }
+}
+
+void print_image(int height, int width, int **image)
+{    
+    // Print Image
+    for (int i=0; i<height; i++) {
+        for (int j=0; j<width; j++) {
+            PRINTIMAGE(image[i][j]);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+void sobel_edge_detection(int height, int width ,int **img2d)
 {
     
 
-    // int img2d[height][width]; // Seg fault for large image due to this
-    // std::cout << "Image Size = " << height << " x " << width << std::endl;
     int ** img2dhororg = (int **)malloc(height*sizeof(int *));
     int ** img2dverorg = (int **)malloc(height*sizeof(int *));
     int ** img2dmag = (int **)malloc(height*sizeof(int *));
 
-
-
     for (int i=0; i<height; i++){
         img2dhororg[i] = (int *)malloc(width*sizeof(int));
-        for (int j=0; j<width; j++) {
-            img2dhororg[i][j] = 0;
-        }
-    }
-
-    for (int i=0; i<height; i++){
         img2dverorg[i] = (int *)malloc(width*sizeof(int));
-        for (int j=0; j<width; j++) {
-            img2dverorg[i][j] = 0;
-        }
-    }
-
-    for (int i=0; i<height; i++){
         img2dmag[i] = (int *)malloc(width*sizeof(int));
         for (int j=0; j<width; j++) {
+            img2dhororg[i][j] = 0;
+            img2dverorg[i][j] = 0;
             img2dmag[i][j] = 0;
         }
     }
 
-    // int img2dhororg[height][width];
-    // int img2dverorg[height][width];
-    // int img2dmag[height][width];
+
+    for (int i=1; i<height-1; i++){
+        for (int j=1; j<width-1; j++) {
+            img2dhororg[i][j] = img2d[i-1][j-1]+2*img2d[i-1][j]+img2d[i-1][j+1]-img2d[i+1][j-1]-2*img2d[i+1][j]-img2d[i+1][j+1];
+            
+        }
+    }
+
+
+    for (int i=1; i<height-1; i++){
+       for (int j=1; j<width-1; j++) {
+            img2dverorg[i][j] = img2d[i-1][j-1]+2*img2d[i][j-1]+img2d[i+1][j-1]-img2d[i-1][j+1]-2*img2d[i][j+1]-img2d[i+1][j+1];
+        }
+    }
 
 
 
-
-    ///horizontal
     int max=-200, min=2000;
-    for (int i=1; i<height-1; i++){
-        for (int j=1; j<width-1; j++) {
-            int curr=img2d[i-1][j-1]+2*img2d[i-1][j]+img2d[i-1][j+1]-img2d[i+1][j-1]-2*img2d[i+1][j]-img2d[i+1][j+1];
-            img2dhororg[i][j] = curr;
-            if (curr>max)
-                max = curr;
-            if (curr<min)
-                min = curr;
-        }
-    }
-
-
-  ///vertical:
-  max=-200; min=2000;
-
-    for (int i=1; i<height-1; i++){
-        for (int j=1; j<width-1; j++) {
-            int curr=img2d[i-1][j-1]+2*img2d[i][j-1]+img2d[i+1][j-1]-img2d[i-1][j+1]-2*img2d[i][j+1]-img2d[i+1][j+1];
-            img2dverorg[i][j] = curr;
-            if (curr>max)
-                max = curr;
-            if (curr<min)
-                min = curr;
-        }
-    }
-
-  ///magnitude
-  max=-200; min=2000;
-
     for (int i=0; i<height; i++) {
         for (int j=0; j<width; j++) {
             img2dmag[i][j] = sqrt(pow(img2dhororg[i][j], 2)+pow(img2dverorg[i][j], 2));
@@ -134,10 +126,13 @@ void SobelEdgeDetection(int height, int width ,int **img2d)
             img2dmag[i][j] = abc* 255;
         }
     }
+
+
+
     // Print Image
     for (int i=0; i<height; i++) {
         for (int j=0; j<width; j++) {
-            DUMPIMAGE(img2dmag[i][j]);
+            PRINTIMAGE(img2dmag[i][j]);
         }
         free(img2dhororg[i]);
         free(img2dverorg[i]);

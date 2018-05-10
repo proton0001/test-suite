@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cmath>
 #include <stdlib.h>
-using namespace std;
 
 #ifdef SMALL_DATASET
 #define HEIGHT 1920
@@ -12,39 +11,50 @@ using namespace std;
 #endif
 
 
-
-
 #define WINDOW 10
-#define DUMPIMAGE(s) std::cout << s
+#define PRINTIMAGE(s) std::cout << s
 
 
-void Blur(int height, int width, int **img2d);
 
-int main(/*int argc, char *argv[]*/)
+
+void init_image(int height, int width, int **image);
+void kernel_box_blur(int height, int width, int **image);
+void print_image(int height, int width, int **image);
+
+
+
+int main(int argc, char *argv[])
 {
-    int** img2d = (int**)malloc(HEIGHT*sizeof(int *));
+    int ** image = (int**)malloc(HEIGHT*sizeof(int *));
 
-    //  Initialize a random image  
-    for (int i=0; i<HEIGHT; i++){
-        img2d[i] = (int*)malloc(WIDTH*sizeof(int));
-        for (int j=0; j<WIDTH; j++) {
-            img2d[i][j] = (i*WIDTH*j +i+j)%256; //Any Random Arbitary Input Should Work
-        }
-    }
+    init_image(HEIGHT, WIDTH, image);
+    kernel_box_blur(HEIGHT, WIDTH, image);
 
-    Blur(HEIGHT, WIDTH, img2d);
-
-
+    print_image( HEIGHT,  WIDTH,  image);
+    
     for (int i=0; i<HEIGHT; i++)
-        free(img2d[i]);
-    free(img2d);   
+        free(image[i]);
+    free(image);   
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
-void Blur(int height, int width, int **img2d)
+
+
+void init_image(int height, int width, int **image)
 {
-    
+    //  Initialize a random image  
+    for (int i=0; i<HEIGHT; i++){
+        image[i] = (int*)malloc(WIDTH*sizeof(int));
+        for (int j=0; j<WIDTH; j++) {
+            image[i][j] = (i*j+i+j)%256; //Any Random Arbitary Input Should Work
+        }
+    }
+}
+
+void kernel_box_blur(int height, int width, int **image)
+{
+    // Allocating memory for output image
     int ** img2dblur = (int**)malloc(height*sizeof(int *));
 
     // Initializing output Image 
@@ -55,28 +65,29 @@ void Blur(int height, int width, int **img2d)
         }
     }
 
-    // Averaging over a window
-    int sum = 0;
+    int sum_in_window = 0;
     int window_size = WINDOW;
     int offset = (window_size-1)/2;
+    int n   = WINDOW*WINDOW;
+    int max = -200;
+    int min = 2000;
 
-    int max= -200, min=2000;
     for (int i=offset; i<height-offset; i++)
     {
         for (int j=offset; j<width-offset; j++)
         {
-            // Computing Sum Over Window
-            sum=0;
+            /* Computing sum of elements in window centered at i,j */
+            sum_in_window=0;
             for (int k= -1 * offset; k<offset; k++)
             {
                 for (int l= -1 * offset; l<offset; l++)
                 {
-                    sum += img2d[i+k][j+l];
+                    sum_in_window += image[i+k][j+l];
                 }
             }
-            // Averaging it
-            img2dblur[i][j] = (sum)/(window_size*window_size);
-            // Get Max and Min (to Normalize it between 0-255)
+            /* Averaging it */
+            img2dblur[i][j] = (sum_in_window)/(n);
+            /* Get Max and Min (to Scale it later between 0-255) */
             if (img2dblur[i][j]>max)
                 max = img2dblur[i][j];
             if (img2dblur[i][j]<min)
@@ -84,8 +95,15 @@ void Blur(int height, int width, int **img2d)
         }
     }
 
-    //  To make it a bit sharper 
+    // Scale everything from 0-255
     int diff = max - min;
+
+    // if max = min then image is constant all over hence no edges(0 pixels only)
+    if(diff==0)
+    {
+        diff = 1;
+    }
+
     for (int i=0; i<height; i++)
     {
         for (int j=0; j<width; j++)
@@ -95,12 +113,29 @@ void Blur(int height, int width, int **img2d)
         }
     }
 
-    // Print Image
-    for (int i=0; i<height; i++) {
-        for (int j=0; j<width; j++) {
-            DUMPIMAGE(img2dblur[i][j]);
+
+    for (int i=0; i<height; i++)
+    {
+        for (int j=0; j<width; j++)
+        {
+            image[i][j] =  img2dblur[i][j];
         }
+    }
+
+
+    // Clear allocated space for image
+    for (int i=0; i<height; i++) {
         free(img2dblur[i]);
     }
     free(img2dblur);
+}
+
+void print_image(int height, int width, int **image)
+{    
+    // Print Image
+    for (int i=0; i<height; i++) {
+        for (int j=0; j<width; j++) {
+            PRINTIMAGE(image[i][j]);
+        }
+    }
 }
