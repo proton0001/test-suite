@@ -1,0 +1,8 @@
+set(PROG nn)
+list(APPEND LDFLAGS -lm)
+set(RUN_OPTIONS)
+if(SMALL_PROBLEM_SIZE)
+  list(APPEND CFLAGS -DSMALL_DATASET)
+endif()
+set(WORKDIR ${CMAKE_CURRENT_BINARY_DIR})
+llvm_multisource()

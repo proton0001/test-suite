@@ -1,0 +1,7 @@
+add_subdirectory(backprop)
+add_subdirectory(hotspot)
+add_subdirectory(hotspot3D)
+add_subdirectory(particlefilter)
+add_subdirectory(bfs)
+add_subdirectory(nn)
+add_subdirectory(nw)

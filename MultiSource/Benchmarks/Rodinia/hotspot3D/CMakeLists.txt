@@ -1,0 +1,9 @@
+set(PROG hotspot3D)
+list(APPEND LDFLAGS -lm)
+if(SMALL_PROBLEM_SIZE)
+  list(APPEND CFLAGS -DSMALL_DATASET)
+endif()
+set(RUN_OPTIONS ${CMAKE_CURRENT_SOURCE_DIR}/power_512x8.txt ${CMAKE_CURRENT_SOURCE_DIR}/temp_512x8.txt)
+
+set(WORKDIR ${CMAKE_CURRENT_BINARY_DIR})
+llvm_multisource()
