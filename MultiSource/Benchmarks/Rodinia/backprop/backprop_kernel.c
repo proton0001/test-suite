@@ -7,27 +7,7 @@
 
 int layer_size = 0;
 
-////////////////////////////////////////////////////////////////////////////////
-
-extern void bpnn_layerforward(float *__restrict__ l1, float *__restrict__ l2,
-                              float *__restrict__ conn, int n1, int n2);
-
-extern void bpnn_output_error(float *__restrict__ delta,
-                              float *__restrict__ target,
-                              float *__restrict__ output, int nj,
-                              float *__restrict__ err);
-
-extern void bpnn_hidden_error(float *__restrict__ delta_h, int nh,
-                              float *__restrict__ delta_o, int no,
-                              float *__restrict__ who,
-                              float *__restrict__ hidden,
-                              float *__restrict__ err);
-
-extern void bpnn_adjust_weights(float *__restrict__ delta, int ndelta,
-                                float *__restrict__ ly, int nly,
-                                float *__restrict__ w,
-                                float *__restrict__ oldw);
-
+void bpnn_train_kernel();
 ////////////////////////////////////////////////////////////////////////////////
 // Program main
 ////////////////////////////////////////////////////////////////////////////////
@@ -39,10 +19,8 @@ int main() {
   srand(SEED);
 
   int i;
-  float out_err, hid_err;
   bpnn_create(layer_size, 16, 1); // (16, 1 can not be changed)
 
-  // printf("Input layer size : %d\n", layer_size);
   int k;
   k = 1;
   for (i = 0; i < layer_size; i++) {
@@ -51,7 +29,7 @@ int main() {
   }
 
   // entering the training kernel, only one iteration
-  bpnn_train_kernel(&out_err, &hid_err);
+  bpnn_train_kernel();
 
   bpnn_dump();
 
@@ -66,7 +44,6 @@ void bpnn_train_kernel() {
   hid = hidden_n;
   out = output_n;
 
-  // printf("Performing CPU computation\n");
   bpnn_layerforward(input_units, hidden_units, input_weights, in, hid);
   bpnn_layerforward(hidden_units, output_units, hidden_weights, hid, out);
   bpnn_output_error(output_delta, target, output_units, out, &out_err);

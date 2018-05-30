@@ -42,11 +42,6 @@ int C = 12345;
 
 /*****************************
 
-// Returns the number of seconds elapsed between the two specified times
-float elapsed_time(long long start_time, long long end_time) {
-        return (float) (end_time - start_time) / (1000 * 1000);
-}
-/** 
 * Takes in a double and returns an integer that approximates to that double
 * @return if the mantissa < .5 => return value < input value; else return value > input value
 */
@@ -429,12 +424,12 @@ int main(int argc, char * argv[])
 	Nfr = NFRAME;
 	
 	//establish seed
-	int * seed = (int *)malloc(sizeof(int)*Nparticles);
+	int * __restrict__ seed = (int *)malloc(sizeof(int)*Nparticles);
 	int i;
 	for(i = 0; i < Nparticles; i++)
 		seed[i] = i*i;
 	//malloc matrix
-	int * I = (int *)malloc(sizeof(int)*IszX*IszY*Nfr);
+	int * __restrict__ I = (int *)malloc(sizeof(int)*IszX*IszY*Nfr);
 	
 	//call video sequence
 	videoSequence(I, IszX, IszY, Nfr, seed);

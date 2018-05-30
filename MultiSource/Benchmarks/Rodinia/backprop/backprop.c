@@ -4,17 +4,20 @@
  * 15-Oct-94  Jeff Shufelt (js), Carnegie Mellon University
  * Prepared for 15-681, Fall 1994.
  * Modified by Shuai Che
- * 28-May-2018 - Pankaj Kukreja, Indian Institute of Technology Hyderabad
+ * 28-May-2018: Modified by Pankaj Kukreja,
+ * Indian Institute of Technology Hyderabad, India
  ******************************************************************
  */
 
 #include "backprop.h"
-#include <fcntl.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#define OPEN false
+
+// GAP Between array index, which we want to compare
+// Otherwise very big reference output
+#define GAP 100
 
 #define ABS(x) (((x) > 0.0) ? (x) : (-(x)))
 
@@ -53,42 +56,42 @@ void bpnn_internal_create(int n_in, int n_hidden, int n_out) {
       /*alloc_1d_dbl(n_in + 1);*/ (float *)malloc(((n_in + 1) * sizeof(float)));
   if (input_units == NULL) {
     fprintf(stderr, "Couldn't allocate array of floats to input_units\n");
-    return (NULL);
+    exit (EXIT_FAILURE);
   }
 
   hidden_units = /*alloc_1d_dbl(n_hidden + 1); */ (float *)malloc(
       ((n_hidden + 1) * sizeof(float)));
   if (hidden_units == NULL) {
     fprintf(stderr, "Couldn't allocate array of floats to hidden_units\n");
-    return (NULL);
+    exit (EXIT_FAILURE);
   }
 
   output_units = /* alloc_1d_dbl(n_out + 1);*/ (float *)malloc(
       ((n_out + 1) * sizeof(float)));
   if (output_units == NULL) {
     fprintf(stderr, "Couldn't allocate array of floats to output_units\n");
-    return (NULL);
+    exit (EXIT_FAILURE);
   }
 
   hidden_delta = /*alloc_1d_dbl(n_hidden + 1);*/ (float *)malloc(
       ((n_hidden + 1) * sizeof(float)));
   if (hidden_delta == NULL) {
     fprintf(stderr, "Couldn't allocate array of floats to hidden_delta\n");
-    return (NULL);
+    exit (EXIT_FAILURE);
   }
 
   output_delta = /*alloc_1d_dbl(n_out + 1);*/ (float *)malloc(
       ((n_out + 1) * sizeof(float)));
   if (output_delta == NULL) {
     fprintf(stderr, "Couldn't allocate array of floats to output_delta\n");
-    return (NULL);
+    exit (EXIT_FAILURE);
   }
 
   target = /*alloc_1d_dbl(n_out + 1);*/ (float *)malloc(
       ((n_out + 1) * sizeof(float)));
   if (target == NULL) {
     fprintf(stderr, "Couldn't allocate array of floats to target\n");
-    return (NULL);
+    exit (EXIT_FAILURE);
   }
 
   input_weights = /*alloc_2d_dbl(n_in + 1, n_hidden + 1);*/ (float *)malloc(
@@ -97,14 +100,14 @@ void bpnn_internal_create(int n_in, int n_hidden, int n_out) {
     fprintf(
         stderr,
         "ALLOC_2D_DBL: Couldn't allocate array of dbl ptrs input_weights \n");
-    return (NULL);
+    exit (EXIT_FAILURE);
   }
 
   hidden_weights = /*alloc_2d_dbl(n_hidden + 1, n_out + 1); */ (float *)malloc(
       ((n_hidden + 1) * (n_out + 1) * sizeof(float)));
   if (hidden_weights == NULL) {
     fprintf(stderr, " Couldn't allocate array of dbl ptrs to hidden_weights\n");
-    return (NULL);
+    exit (EXIT_FAILURE);
   }
 
   input_prev_weights = /* alloc_2d_dbl(n_in + 1, n_hidden + 1); */ (
@@ -112,7 +115,7 @@ void bpnn_internal_create(int n_in, int n_hidden, int n_out) {
   if (input_prev_weights == NULL) {
     fprintf(stderr,
             " Couldn't allocate array of dbl ptrs to input_prev_weights\n");
-    return (NULL);
+    exit (EXIT_FAILURE);
   }
 
   hidden_prev_weights = /* alloc_2d_dbl(n_hidden + 1, n_out + 1); */ (
@@ -120,7 +123,7 @@ void bpnn_internal_create(int n_in, int n_hidden, int n_out) {
   if (hidden_prev_weights == NULL) {
     fprintf(stderr,
             " Couldn't allocate array of dbl ptrs to hidden_prev_weights\n");
-    return (NULL);
+    exit (EXIT_FAILURE);
   }
 }
 
@@ -145,7 +148,6 @@ void bpnn_free() {
      Space is also allocated for temporary storage (momentum weights,
      error computations, etc).
 ***/
-
 void bpnn_create(int n_in, int n_hidden, int n_out) {
 
   bpnn_internal_create(n_in, n_hidden, n_out);
@@ -161,9 +163,7 @@ void bpnn_create(int n_in, int n_hidden, int n_out) {
   bpnn_randomize_row(target, n_out);
 }
 
-// conn= [n1][n2]
-// l1[n1]
-// l2[n2]
+// conn= [n1][n2] , l1[n1] , l2[n2]
 void bpnn_layerforward(float *__restrict__ l1, float *__restrict__ l2,
                        float *__restrict__ conn, int n1, int n2) {
   float sum;
@@ -197,11 +197,7 @@ void bpnn_output_error(float *__restrict__ delta, float *__restrict__ target,
   *err = errsum;
 }
 
-// delta_h[nh]
-// delta_o[no]
-// who[nh][no]
-// err = int
-// hidden[nh]
+// delta_h[nh], delta_o[no], who[nh][no], err = int, hidden[nh]
 void bpnn_hidden_error(float *__restrict__ delta_h, int nh,
                        float *__restrict__ delta_o, int no,
                        float *__restrict__ who, float *__restrict__ hidden,
@@ -221,18 +217,13 @@ void bpnn_hidden_error(float *__restrict__ delta_h, int nh,
   *err = errsum;
 }
 
-// delta[ndelta]
-// ly[nly]
-// w[nly][ndelta]
-// oldw[nly][ndelta]
+// delta[ndelta], ly[nly], w[nly][ndelta], oldw[nly][ndelta]
 void bpnn_adjust_weights(float *__restrict__ delta, int ndelta,
                          float *__restrict__ ly, int nly, float *__restrict__ w,
                          float *__restrict__ oldw) {
   float new_dw;
   int k, j;
   ly[0] = 1.0;
-  // eta = 0.3;
-  // momentum = 0.3;
 
   for (j = 1; j <= ndelta; j++) {
     for (k = 0; k <= nly; k++) {
@@ -281,14 +272,20 @@ void bpnn_dump() {
 
   for (i = 0; i <= n1; i++) {
     for (j = 0; j <= n2; j++) {
-      printf("%.6f\n", input_weights[i * n2 + i + j]);
+      if((i*n2+i+j) % GAP ==  0)
+      {
+        printf("%.6f\n", input_weights[i * n2 + i + j]);
+      }
     }
   }
 
 
   for (i = 0; i <= n2; i++) {
     for (j = 0; j <= n3; j++) {
-      printf("%.6f\n", hidden_weights[i * n3 + i + j]);
+      if((i*n3+i+j) % GAP ==  0)
+      {
+        printf("%.6f\n", hidden_weights[i * n3 + i + j]);
+      }
     }
   }
   return;

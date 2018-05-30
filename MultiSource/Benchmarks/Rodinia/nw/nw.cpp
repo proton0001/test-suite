@@ -82,7 +82,6 @@ void usage(int argc, char **argv)
 
 void nw_kernel(int * __restrict__ input_itemsets, int * __restrict__ output_itemsets, int * __restrict__ referrence, int max_rows, int max_cols, int penalty)
 {
-    int transfer_size = max_rows * max_cols;
     {
         for( int blk = 1; blk <= (max_cols-1)/BLOCK_SIZE; blk++ )
         {
@@ -191,7 +190,7 @@ void nw_kernel(int * __restrict__ input_itemsets, int * __restrict__ output_item
 void runTest() 
 {
     int max_rows, max_cols, penalty;
-    int *input_itemsets, *output_itemsets, *referrence;
+    int * __restrict__ input_itemsets, * __restrict__ output_itemsets, * __restrict__ referrence;
     
     // the lengths of the two sequences should be able to divided by 16.
     // And at current stage  max_rows needs to equal max_cols
@@ -251,7 +250,7 @@ void runTest()
 #define TRACEBACK
 #ifdef TRACEBACK
     bool flag = false;
-    for (int i = max_rows - 2,  j = max_rows - 2; i>=0, j>=0;){
+    for (int i = max_rows - 2,  j = max_rows - 2; i>=0 && j>=0;){
         int nw, n, w, traceback;
         if ( i == max_rows - 2 && j == max_rows - 2 )
             printf("%d ", input_itemsets[ i * max_cols + j]); //print the first element

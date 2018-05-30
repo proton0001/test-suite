@@ -1,43 +1,50 @@
+/*
+- Modified by Pankaj Kukreja
+- Indian Institute of Technology Hyderabad, India
+*/
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
-#define OPEN
 //Structure to hold a node information
+
+// Gap in which array should be printed
+#define GAP 20
+
 struct Node
 {
 	int source;
 	int edge_id;
 };
-void BFSGraph(int argc, char** argv);
+void BFSGraph(char *filename);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main Program
 ////////////////////////////////////////////////////////////////////////////////
-int main( int argc, char** argv) 
+int main( int argc, char* argv[]) 
 {
-	BFSGraph(argc, argv);
-	return 0;
-}
 
-void BFSGraph(int argc, char** argv)
-{
-	FILE *fp;
-    int no_of_nodes = 0;
-    int edge_list_size = 0;
-	
 	if(argc!=2)
 	{
 		fprintf(stderr,"Usage: %s <input_file>\n", argv[0]);
 		exit(0);
 	}
-    
+	BFSGraph(argv[1]);
+	return 0;
+}
+
+void BFSGraph(char* filename)
+{
+	FILE *fp;
+    int no_of_nodes = 0;
+    int edge_list_size = 0;
+
 	//Read in Graph from a file
-	fp = fopen(argv[1],"r");
+	fp = fopen(filename,"r");
 	if(!fp)
 	{
 		printf("Error Reading graph file\n");
-		return; 
+		exit(0);
 	}
 	int source = 0;
 	fscanf(fp,"%d",&no_of_nodes);
@@ -49,7 +56,7 @@ void BFSGraph(int argc, char** argv)
 	bool * __restrict__ h_graph_visited = (bool*) malloc(sizeof(bool)*no_of_nodes);
 	int start, edgeid;   
 	// initalize the memory
-	for( unsigned int i = 0; i < no_of_nodes; i++) 
+	for(int i = 0; i < no_of_nodes; i++) 
 	{
 		fscanf(fp,"%d %d",&start,&edgeid);
 		h_graph_nodes[i].source = start;
@@ -84,38 +91,38 @@ void BFSGraph(int argc, char** argv)
 	for(int i=0;i<no_of_nodes;i++)
 		h_cost[i]=-1;
 	h_cost[source]=0;
-	// printf("Start traversing the tree\n");
+
 	int k=0;
 	bool stop;
 	do
     {
         stop=false;
-        for(int k = 0; k < no_of_nodes; k++ )
+        for(int _k = 0; _k < no_of_nodes; _k++ )
         {
-            if(h_graph_mask[k]==true)
+            if(h_graph_mask[_k]==true)
             { 
-                h_graph_mask[k]=false;
-                for(int i=h_graph_nodes[k].source;
-                	i<(h_graph_nodes[k].edge_id + h_graph_nodes[k].source); 
+                h_graph_mask[_k]=false;
+                for(int i=h_graph_nodes[_k].source;
+                	i<(h_graph_nodes[_k].edge_id + h_graph_nodes[_k].source); 
                 	i++)
                 {
                     int id = h_graph_edges[i];
                     if(!h_graph_visited[id])
                     {
-                        h_cost[id]=h_cost[k]+1;
+                        h_cost[id]=h_cost[_k]+1;
                         h_updating_graph_mask[id]=true;
                     }
                 }
             }
         }
-        for(int k=0; k< no_of_nodes ; k++ )
+        for(int _k=0; _k< no_of_nodes ; _k++ )
         {
-            if (h_updating_graph_mask[k] == true)
+            if (h_updating_graph_mask[_k] == true)
             {
-                h_graph_mask[k]=true;
-                h_graph_visited[k]=true;
+                h_graph_mask[_k]=true;
+                h_graph_visited[_k]=true;
                 stop=true;
-                h_updating_graph_mask[k]=false;
+                h_updating_graph_mask[_k]=false;
             }
         }
         k++;
@@ -123,7 +130,12 @@ void BFSGraph(int argc, char** argv)
 	while(stop);
 	//Store the result into a file
 	for(int i=0;i<no_of_nodes;i++)
-		fprintf(stdout,"%d %d\n",i,h_cost[i]);
+	{
+		if(i % GAP == 0)
+		{
+			fprintf(stdout,"%d %d\n",i,h_cost[i]);
+		}
+	}
 	
 	// cleanup memory
 	free( h_graph_nodes);

@@ -1,7 +1,6 @@
 /*
-- Taken from hotspot folder of Rodinia Benchmark
-- Modified by Pankaj Kukreja
-- Indian Institute of Technology Hyderabad, India
+ * Modified by Pankaj Kukreja
+ * Indian Institute of Technology Hyderabad, India
 */
 
 #include <stdio.h>
@@ -12,7 +11,8 @@
 #include <fstream>
 #include <cstdlib>
 
-
+// Gap in which array should be printed
+#define GAP 25
 
 
 #ifdef SMALL_DATASET
@@ -23,18 +23,10 @@
   #define MULTIPLIER 2
 #endif
 
+
+
 #define OUT_SIZE IN_SIZE*MULTIPLIER
 #define ITERATIONCOUNT 4
-
-
-
-
-// // Returns the current system time in microseconds
-// long long get_time() {
-//   struct timeval tv;
-//   gettimeofday(&tv, NULL);
-//   return (tv.tv_sec * 1000000) + tv.tv_usec;
-// }
 
 using namespace std;
 
@@ -42,12 +34,15 @@ using namespace std;
 #define BLOCK_SIZE_C BLOCK_SIZE
 #define BLOCK_SIZE_R BLOCK_SIZE
 #define STR_SIZE 256
+
 /* maximum power density possible (say 300W for a 10mm x 10mm chip) */
 #define MAX_PD (3.0e6)
+
 /* required precision in degrees    */
 #define PRECISION 0.001
 #define SPEC_HEAT_SI 1.75e6
 #define K_SI 100
+
 /* capacitance fitting factor   */
 #define FACTOR_CHIP 0.5
 
@@ -211,15 +206,16 @@ void writeoutput(FLOAT *vect, int grid_rows, int grid_cols) {
   int i, j, index = 0;
   for (i = 0; i < grid_rows; i++) {
     for (j = 0; j < grid_cols; j++) {
-      printf("%d\t%g\n", index, vect[i * grid_cols + j]);
+      if(index%GAP==0)
+      {
+        printf("%d\t%g\n", index, vect[i * grid_cols + j]);
+      }
       index++;
     }
   }
 }
 
 void read_input(FLOAT * __restrict__ vect, char * __restrict__ file) {
-  int i, index;
-  char str[STR_SIZE];
 
   const int x = MULTIPLIER;
 
@@ -257,9 +253,9 @@ void usage(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-  int grid_rows, grid_cols, sim_time, i;
-  FLOAT *temp, *power, *result;
-  char *tfile, *pfile, *ofile;
+  int grid_rows, grid_cols, sim_time;
+  FLOAT * __restrict__ temp, * __restrict__ power, * __restrict__ result;
+  char *__restrict__ tfile, *__restrict__ pfile;
 
   /* check validity of inputs */
   if (argc != 3) 

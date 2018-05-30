@@ -28,7 +28,7 @@
 int main(int argc, char* argv[]) 
 {
 	int    i=0,j=0, k=0, rec_count=0, done=0;
-	float target_lat, target_long, tmp_lat=0, tmp_long=0;
+	float target_lat, target_long;
 	char   sandbox[REC_LENGTH * REC_WINDOW * 2];
 
 

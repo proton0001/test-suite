@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define GAP 50
 
 #define ROWS 2048
 #define COLS 2048
@@ -169,7 +170,10 @@ int main(int argc, char *argv[]) {
 #ifdef OUTPUT
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
-      printf("%.5f\n", J[i * cols + j]);
+      if((i * cols + j)%GAP==0)
+      {
+        printf("%.5f\n", J[i * cols + j]);
+      }
     }
     printf("\n");
   }

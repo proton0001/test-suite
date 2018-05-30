@@ -1,3 +1,7 @@
+/*
+ * Modified by Pankaj Kukreja
+ * Indian Institute of Technology Hyderabad, India
+*/
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
@@ -5,6 +9,8 @@
 #include <math.h> 
 #include <sys/time.h>
 #include <string.h>
+
+#define GAP 20
 
 #define STR_SIZE (256)
 #define MAX_PD	(3.0e6)
@@ -74,9 +80,14 @@ void writeoutput(float *vect, int grid_rows, int grid_cols, int layers) {
     for (i=0; i < grid_rows; i++) 
       for (j=0; j < grid_cols; j++)
         for (k=0; k < layers; k++) {
-          printf("%d\t%.6f\n", index, vect[i*grid_cols+j+k*grid_rows*grid_cols]);
-          index++;
+        {
+            if(index%GAP==0)
+            {
+                printf("%d\t%.6f\n", index, vect[i*grid_cols+j+k*grid_rows*grid_cols]);
+            }
+            index++;
         }
+    }
 }
 
 
@@ -130,7 +141,7 @@ int main(int argc, char** argv)
        exit(1);
     }
 
-    char *pfile, *tfile, *ofile;
+    char * __restrict__ pfile, * __restrict__ tfile;
 
     int iterations = ITERATION;
     tfile = argv[2];
